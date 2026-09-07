@@ -1,0 +1,480 @@
+-- DAVI_MM2_version0.10 | Rayfield Khmer Edition (Full Features Preserved)
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "DAVI_MM2_version0.10 (ភាសាខ្មែរ)",
+   LoadingTitle = "កំពុងដំណើការ DAVI Engine...",
+   LoadingSubtitle = "MM2 Hub កម្ពុជា",
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
+   KeySystem = false
+})
+
+-- Services & Local Variables
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Feature States
+local ESP_Players_Enabled = false
+local ESP_Gun_Enabled = false
+local AutoLoopGrabGun_Enabled = false
+local Aimbot_Enabled = false
+local FOV_Visible = false
+local FOV_Radius = 100
+local OnScreenUI_Visible = true
+
+-- FOV Circle Graphic setup
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = Color3.fromRGB(255, 0, 0)
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 30
+FOVCircle.Radius = FOV_Radius
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+
+-- Helper: Identify Roles
+local function getRole(player)
+    if not player or not player.Character then return "Innocent" end
+    if player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife") then
+        return "Murderer"
+    elseif player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun") then
+        return "Sheriff"
+    end
+    return "Innocent"
+end
+
+local function getMurderer()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and getRole(p) == "Murderer" then return p end
+    end
+    return nil
+end
+
+local function getSheriff()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and getRole(p) == "Sheriff" then return p end
+    end
+    return nil
+end
+
+local function getNearestPlayer()
+    local char = LocalPlayer.Character
+    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    local closestPlayer = nil
+    local shortestDist = math.huge
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (myRoot.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if dist < shortestDist then
+                shortestDist = dist
+                closestPlayer = p
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- Helper: Locate Dropped Gun
+local function findDroppedGun()
+    return Workspace:FindFirstChild("GunDrop") 
+        or Workspace:FindFirstChild("Gun")
+        or (Workspace:FindFirstChild("Normal") and Workspace.Normal:FindFirstChild("GunDrop"))
+end
+
+-- Teleport & Grab Dropped Gun
+local function grabGun()
+    local gunDropPart = findDroppedGun()
+    local char = LocalPlayer.Character
+    if gunDropPart and char and char:FindFirstChild("HumanoidRootPart") then
+        local oldCFrame = char.HumanoidRootPart.CFrame
+        char.HumanoidRootPart.CFrame = gunDropPart.CFrame * CFrame.new(0, 1, 0)
+        
+        for _, prompt in pairs(gunDropPart:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") then fireproximityprompt(prompt) end
+        end
+        firetouchinterest(char.HumanoidRootPart, gunDropPart, 0)
+        firetouchinterest(char.HumanoidRootPart, gunDropPart, 1)
+
+        task.wait(0.2)
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = oldCFrame
+        end
+    end
+end
+
+-- Fling Logic (Out of World)
+local function executeFling(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character then return end
+    local char = LocalPlayer.Character
+    local targetChar = targetPlayer.Character
+    
+    local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+    
+    if not myRoot or not targetRoot then return end
+    
+    local oldPos = myRoot.CFrame
+    local bav = Instance.new("BodyAngularVelocity")
+    bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bav.AngularVelocity = Vector3.new(999999, 999999, 999999)
+    bav.Parent = myRoot
+
+    local timer = tick()
+    while tick() - timer < 2.5 do
+        RunService.Heartbeat:Wait()
+        if targetRoot and targetRoot.Parent and myRoot and myRoot.Parent then
+            myRoot.CFrame = targetRoot.CFrame
+            myRoot.AssemblyLinearVelocity = Vector3.new(999999, 999999, 999999)
+        else
+            break
+        end
+    end
+    
+    bav:Destroy()
+    myRoot.AssemblyLinearVelocity = Vector3.zero
+    myRoot.CFrame = oldPos
+end
+
+-- Auto Shoot Core
+local function shootMurderer()
+    local murderer = getMurderer()
+    local char = LocalPlayer.Character
+    if not murderer or not murderer.Character or not murderer.Character:FindFirstChild("Head") then return end
+    
+    local gun = char and (char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun"))
+    if gun then
+        if gun.Parent == LocalPlayer.Backpack then gun.Parent = char end
+        local shootEvent = gun:FindFirstChild("ShootEvent") or gun:FindFirstChild("Shoot")
+        if shootEvent then
+            local headPos = murderer.Character.Head.Position
+            shootEvent:FireServer(CFrame.new(char.HumanoidRootPart.Position, headPos), CFrame.new(headPos))
+        end
+    end
+end
+
+-- Auto Throw Core (Target Specific)
+local function throwKnifeAt(target)
+    local char = LocalPlayer.Character
+    local knife = char and (char:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife"))
+    if not knife or not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    if knife.Parent == LocalPlayer.Backpack then knife.Parent = char end
+
+    local throwEv = knife:FindFirstChild("Throw") or (knife:FindFirstChild("Events") and knife.Events:FindFirstChild("Throw"))
+    if throwEv then
+        throwEv:FireServer(
+            target.Character.HumanoidRootPart.Position, 
+            CFrame.new(char.HumanoidRootPart.Position, target.Character.HumanoidRootPart.Position)
+        )
+    end
+end
+
+-- TP & Shoot Murderer Core
+local function tpAndShootMurderer()
+    local murd = getMurderer()
+    local char = LocalPlayer.Character
+    if murd and murd.Character and char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = murd.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
+        task.wait(0.1)
+        shootMurderer()
+    end
+end
+
+-- Floating Action Screen UI Setup
+local ScreenUI = Instance.new("ScreenGui")
+ScreenUI.Name = "DAVI_OnScreenUI"
+ScreenUI.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+
+local function createClickBox(text, pos, color, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 150, 0, 38)
+    btn.Position = pos
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 10
+    btn.Text = text
+    btn.Active = true
+    btn.Draggable = true
+    btn.Parent = ScreenUI
+    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1.5
+
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- On-Screen Click Boxes
+createClickBox("AUTO SHOOT MURD", UDim2.new(0.80, 0, 0.20, 0), Color3.fromRGB(0, 120, 255), function() shootMurderer() end)
+createClickBox("THROW AT SHERIFF", UDim2.new(0.80, 0, 0.27, 0), Color3.fromRGB(255, 50, 50), function() throwKnifeAt(getSheriff()) end)
+createClickBox("THROW AT NEAREST", UDim2.new(0.80, 0, 0.34, 0), Color3.fromRGB(200, 80, 0), function() throwKnifeAt(getNearestPlayer()) end)
+createClickBox("TP & SHOOT MURD", UDim2.new(0.80, 0, 0.41, 0), Color3.fromRGB(0, 180, 210), function() tpAndShootMurderer() end)
+
+-- Background Loops for ESP / FOV / Auto-Grab
+RunService.RenderStepped:Connect(function()
+    -- On-Screen UI Master Visibility
+    ScreenUI.Enabled = OnScreenUI_Visible
+
+    -- Player ESP Logic
+    if ESP_Players_Enabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local hl = p.Character:FindFirstChild("DAVI_ESP") or Instance.new("Highlight")
+                hl.Name = "DAVI_ESP"
+                hl.Adornee = p.Character
+                hl.Parent = p.Character
+                
+                local role = getRole(p)
+                if role == "Murderer" then hl.FillColor = Color3.fromRGB(255, 0, 0)
+                elseif role == "Sheriff" then hl.FillColor = Color3.fromRGB(0, 100, 255)
+                else hl.FillColor = Color3.fromRGB(0, 255, 100) end
+            end
+        end
+    end
+
+    -- Gun ESP Logic
+    local droppedGun = findDroppedGun()
+    if ESP_Gun_Enabled and droppedGun then
+        local ghl = droppedGun:FindFirstChild("DAVI_GunESP") or Instance.new("Highlight")
+        ghl.Name = "DAVI_GunESP"
+        ghl.Adornee = droppedGun
+        ghl.FillColor = Color3.fromRGB(255, 255, 0)
+        ghl.Parent = droppedGun
+    end
+
+    -- FOV Graphic render
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    FOVCircle.Visible = FOV_Visible
+
+    -- Aimbot Lock onto Murderer Head
+    if Aimbot_Enabled then
+        local murd = getMurderer()
+        if murd and murd.Character and murd.Character:FindFirstChild("Head") then
+            local headPos, onScreen = Camera:WorldToViewportPoint(murd.Character.Head.Position)
+            local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
+            if onScreen and dist <= FOV_Radius then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, murd.Character.Head.Position)
+            end
+        end
+    end
+end)
+
+-- Continuous Auto Grab Gun loop
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if AutoLoopGrabGun_Enabled and findDroppedGun() then
+            grabGun()
+        end
+    end
+end)
+
+-- RAYFIELD UI TABS & CONTROLS
+
+-- TAB 1: ប្រព័ន្ធប្រយុទ្ធ (Combat)
+local CombatTab = Window:CreateTab("ប្រព័ន្ធប្រយុទ្ធ", 4483362458)
+
+CombatTab:CreateToggle({
+   Name = "បង្ហាញ Click Boxes លើអេក្រង់ (Show Click Boxes)",
+   CurrentValue = true,
+   Callback = function(v)
+      OnScreenUI_Visible = v
+   end,
+})
+
+CombatTab:CreateButton({
+   Name = "បាញ់ Murderer ស្វ័យប្រវត្តិ (Auto Shoot Murder)",
+   Callback = function() shootMurderer() end,
+})
+
+CombatTab:CreateButton({
+   Name = "គប់កាំបិតសំដៅ Sheriff (Throw at Sheriff)",
+   Callback = function() throwKnifeAt(getSheriff()) end,
+})
+
+CombatTab:CreateButton({
+   Name = "គប់កាំបិតសំដៅ Player ជិតបំផុត (Throw at Nearest Player)",
+   Callback = function() throwKnifeAt(getNearestPlayer()) end,
+})
+
+CombatTab:CreateButton({
+   Name = "Teleport ទៅបាញ់ Murderer ភ្លាមៗ (Sheriff TP & Shoot)",
+   Callback = function() tpAndShootMurderer() end,
+})
+
+CombatTab:CreateButton({
+   Name = "សម្លាប់មនុស្សទាំងអស់ក្នុង Server (Kill Everyone - Murderer)",
+   Callback = function()
+      local char = LocalPlayer.Character
+      local knife = char and (char:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife"))
+      if not knife then return end
+      if knife.Parent == LocalPlayer.Backpack then knife.Parent = char end
+
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1.5)
+            task.wait(0.1)
+            pcall(function()
+               if knife:FindFirstChild("Events") and knife.Events:FindFirstChild("KnifeStabbed") then
+                  knife.Events.KnifeStabbed:FireServer()
+                  knife.Events.HandleTouched:FireServer(p.Character.Head)
+               end
+            end)
+         end
+      end
+   end,
+})
+
+-- TAB 2: រ៉ាដាមើលធ្លុះ (ESP & Aimbot)
+local VisualsTab = Window:CreateTab("រ៉ាដាមើលធ្លុះ & Aimbot", 4483362458)
+
+VisualsTab:CreateToggle({
+   Name = "បើក ESP មើលមនុស្ស (Red=Murd, Blue=Sheriff, Green=Normal)",
+   CurrentValue = false,
+   Callback = function(v) ESP_Players_Enabled = v end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "បើក ESP មើលកាំភ្លើងធ្លាក់ (Yellow Gun ESP)",
+   CurrentValue = false,
+   Callback = function(v) ESP_Gun_Enabled = v end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "បើក Aimbot តម្រង់ក្បាល Murderer",
+   CurrentValue = false,
+   Callback = function(v) Aimbot_Enabled = v end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "បង្ហាញរង្វង់ Aimbot (Show FOV Circle)",
+   CurrentValue = false,
+   Callback = function(v) FOV_Visible = v end,
+})
+
+VisualsTab:CreateSlider({
+   Name = "ទំហំរង្វង់ Aimbot FOV",
+   Range = {30, 400},
+   Increment = 5,
+   CurrentValue = 100,
+   Callback = function(v)
+      FOV_Radius = v
+      FOVCircle.Radius = v
+   end,
+})
+
+-- TAB 3: ប្រព័ន្ធរើសកាំភ្លើង (Gun System)
+local GunTab = Window:CreateTab("ប្រព័ន្ធរើសកាំភ្លើង", 4483362458)
+
+GunTab:CreateButton({
+   Name = "Teleport ទៅរើសកាំភ្លើង 1 ដង (Teleport & Grab Gun)",
+   Callback = function() grabGun() end,
+})
+
+GunTab:CreateToggle({
+   Name = "រើសកាំភ្លើងរហូតស្វ័យប្រវត្តិ (Loop Auto Grab Gun)",
+   CurrentValue = false,
+   Callback = function(v) AutoLoopGrabGun_Enabled = v end,
+})
+
+-- TAB 4: ប្រព័ន្ធ Fling
+local FlingTab = Window:CreateTab("ប្រព័ន្ធ Fling", 4483362458)
+
+local targetFlingPlayer = ""
+local pNames = {}
+local function refreshDropdown()
+    pNames = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then table.insert(pNames, p.Name) end
+    end
+end
+refreshDropdown()
+
+local PlayerDropdown = FlingTab:CreateDropdown({
+   Name = "ជ្រើសរើសឈ្មោះ Player ដើម្បី Fling",
+   Options = pNames,
+   CurrentOption = pNames[1] or "",
+   Callback = function(opt)
+      targetFlingPlayer = type(opt) == "table" and opt[1] or opt
+   end,
+})
+
+FlingTab:CreateButton({
+   Name = "Fling Player ដែលបានជ្រើសរើសចេញក្រៅ Map",
+   Callback = function()
+      local target = Players:FindFirstChild(targetFlingPlayer)
+      if target then executeFling(target) end
+   end,
+})
+
+FlingTab:CreateButton({
+   Name = "Teleport ទៅ Fling Murderer ចេញក្រៅ Map",
+   Callback = function()
+      local murd = getMurderer()
+      if murd then executeFling(murd) end
+   end,
+})
+
+FlingTab:CreateButton({
+   Name = "Teleport ទៅ Fling Sheriff ចេញក្រៅ Map",
+   Callback = function()
+      local sher = getSheriff()
+      if sher then executeFling(sher) end
+   end,
+})
+
+-- TAB 5: បញ្ជូនទីតាំង (Teleport System)
+local TeleportTab = Window:CreateTab("បញ្ជូនទីតាំង (TP)", 4483362458)
+
+TeleportTab:CreateButton({
+   Name = "Teleport ទៅ Lobby",
+   Callback = function()
+      local lobby = Workspace:FindFirstChild("Lobby")
+      local char = LocalPlayer.Character
+      if lobby and char and char:FindFirstChild("HumanoidRootPart") then
+         char.HumanoidRootPart.CFrame = lobby:GetModelCFrame() or CFrame.new(0, 50, 0)
+      end
+   end,
+})
+
+TeleportTab:CreateButton({
+   Name = "Teleport ទៅ Map ប្រកួត",
+   Callback = function()
+      local map = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("Map")
+      local char = LocalPlayer.Character
+      if map and char and char:FindFirstChild("HumanoidRootPart") then
+         char.HumanoidRootPart.CFrame = map:GetModelCFrame() * CFrame.new(0, 5, 0)
+      end
+   end,
+})
+
+local targetTpPlayer = ""
+TeleportTab:CreateDropdown({
+   Name = "ជ្រើសរើស Player ដើម្បី Teleport ទៅជិត",
+   Options = pNames,
+   CurrentOption = pNames[1] or "",
+   Callback = function(opt)
+      targetTpPlayer = type(opt) == "table" and opt[1] or opt
+   end,
+})
+
+TeleportTab:CreateButton({
+   Name = "Teleport ទៅជិត Player នោះ",
+   Callback = function()
+      local target = Players:FindFirstChild(targetTpPlayer)
+      local char = LocalPlayer.Character
+      if target and target.Character and char and char:FindFirstChild("HumanoidRootPart") then
+         char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+      end
+   end,
+})
