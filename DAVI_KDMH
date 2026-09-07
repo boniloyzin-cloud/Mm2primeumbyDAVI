@@ -1,13 +1,13 @@
--- DAVI_MM2_version0.10 | Rayfield Khmer Edition with Whitelist Protection
+-- DAVI_MM2_version0.10 | Rayfield Khmer Edition with Whitelist Protection (50 Players)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==========================================
--- 1. ប្រព័ន្ធ WHITELIST PROTECTION (10 PLAYERS)
+-- 1. ប្រព័ន្ធ WHITELIST PROTECTION (50 PLAYERS)
 -- ==========================================
 local WhitelistedUsers = {
     ["DAVI_KDMH"] = true,     -- ឈ្មោះទី ១ (របស់អ្នក)
-    ["AHWIN320"] = true, -- ដូរទៅជា Username របស់អ្នកទិញទី ២
+    ["AHWIN320"] = true,
     ["BuyerUsername3"] = true,
     ["BuyerUsername4"] = true,
     ["BuyerUsername5"] = true,
@@ -16,6 +16,46 @@ local WhitelistedUsers = {
     ["BuyerUsername8"] = true,
     ["BuyerUsername9"] = true,
     ["BuyerUsername10"] = true,
+    ["BuyerUsername11"] = true,
+    ["BuyerUsername12"] = true,
+    ["BuyerUsername13"] = true,
+    ["BuyerUsername14"] = true,
+    ["BuyerUsername15"] = true,
+    ["BuyerUsername16"] = true,
+    ["BuyerUsername17"] = true,
+    ["BuyerUsername18"] = true,
+    ["BuyerUsername19"] = true,
+    ["BuyerUsername20"] = true,
+    ["BuyerUsername21"] = true,
+    ["BuyerUsername22"] = true,
+    ["BuyerUsername23"] = true,
+    ["BuyerUsername24"] = true,
+    ["BuyerUsername25"] = true,
+    ["BuyerUsername26"] = true,
+    ["BuyerUsername27"] = true,
+    ["BuyerUsername28"] = true,
+    ["BuyerUsername29"] = true,
+    ["BuyerUsername30"] = true,
+    ["BuyerUsername31"] = true,
+    ["BuyerUsername32"] = true,
+    ["BuyerUsername33"] = true,
+    ["BuyerUsername34"] = true,
+    ["BuyerUsername35"] = true,
+    ["BuyerUsername36"] = true,
+    ["BuyerUsername37"] = true,
+    ["BuyerUsername38"] = true,
+    ["BuyerUsername39"] = true,
+    ["BuyerUsername40"] = true,
+    ["BuyerUsername41"] = true,
+    ["BuyerUsername42"] = true,
+    ["BuyerUsername43"] = true,
+    ["BuyerUsername44"] = true,
+    ["BuyerUsername45"] = true,
+    ["BuyerUsername46"] = true,
+    ["BuyerUsername47"] = true,
+    ["BuyerUsername48"] = true,
+    ["BuyerUsername49"] = true,
+    ["BuyerUsername50"] = true,
 }
 
 -- ផ្ទៀងផ្ទាត់ឈ្មោះ Player
@@ -46,8 +86,8 @@ local Camera = Workspace.CurrentCamera
 -- Feature States
 local ESP_Players_Enabled = false
 local ESP_Gun_Enabled = false
-local AutoLoopGrabGun_Enabled = false
-local Aimbot_Enabled = false
+local Aimbot_Murderer_Enabled = false
+local Aimbot_Sheriff_Enabled = false
 local FOV_Visible = false
 local FOV_Radius = 100
 local OnScreenUI_Visible = true
@@ -113,7 +153,7 @@ local function findDroppedGun()
         or (Workspace:FindFirstChild("Normal") and Workspace.Normal:FindFirstChild("GunDrop"))
 end
 
--- Teleport & Grab Dropped Gun
+-- Teleport & Grab Dropped Gun (1 Time)
 local function grabGun()
     local gunDropPart = findDroppedGun()
     local char = LocalPlayer.Character
@@ -245,7 +285,7 @@ createClickBox("THROW AT SHERIFF", UDim2.new(0.80, 0, 0.27, 0), Color3.fromRGB(2
 createClickBox("THROW AT NEAREST", UDim2.new(0.80, 0, 0.34, 0), Color3.fromRGB(200, 80, 0), function() throwKnifeAt(getNearestPlayer()) end)
 createClickBox("TP & SHOOT MURD", UDim2.new(0.80, 0, 0.41, 0), Color3.fromRGB(0, 180, 210), function() tpAndShootMurderer() end)
 
--- Background Loops for ESP / FOV / Auto-Grab
+-- Background Loops for ESP / FOV
 RunService.RenderStepped:Connect(function()
     ScreenUI.Enabled = OnScreenUI_Visible
 
@@ -277,25 +317,19 @@ RunService.RenderStepped:Connect(function()
     FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     FOVCircle.Visible = FOV_Visible
 
-    if Aimbot_Enabled then
-        local murd = getMurderer()
-        if murd and murd.Character and murd.Character:FindFirstChild("Head") then
-            local headPos, onScreen = Camera:WorldToViewportPoint(murd.Character.Head.Position)
-            local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-            local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
-            if onScreen and dist <= FOV_Radius then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, murd.Character.Head.Position)
-            end
-        end
+    local targetPlayer = nil
+    if Aimbot_Murderer_Enabled then
+        targetPlayer = getMurderer()
+    elseif Aimbot_Sheriff_Enabled then
+        targetPlayer = getSheriff()
     end
-end)
 
--- Continuous Auto Grab Gun loop
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if AutoLoopGrabGun_Enabled and findDroppedGun() then
-            grabGun()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local headPos, onScreen = Camera:WorldToViewportPoint(targetPlayer.Character.Head.Position)
+        local mousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
+        if onScreen and dist <= FOV_Radius then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
         end
     end
 end)
@@ -369,7 +403,19 @@ VisualsTab:CreateToggle({
 VisualsTab:CreateToggle({
    Name = "បើក Aimbot តម្រង់ក្បាល Murderer",
    CurrentValue = false,
-   Callback = function(v) Aimbot_Enabled = v end,
+   Callback = function(v) 
+      Aimbot_Murderer_Enabled = v 
+      if v then Aimbot_Sheriff_Enabled = false end
+   end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "បើក Aimbot តម្រង់ក្បាល Sheriff",
+   CurrentValue = false,
+   Callback = function(v) 
+      Aimbot_Sheriff_Enabled = v 
+      if v then Aimbot_Murderer_Enabled = false end
+   end,
 })
 
 VisualsTab:CreateToggle({
@@ -394,12 +440,6 @@ local GunTab = Window:CreateTab("ប្រព័ន្ធរើសកាំភ�
 GunTab:CreateButton({
    Name = "Teleport ទៅរើសកាំភ្លើង 1 ដង (Teleport & Grab Gun)",
    Callback = function() grabGun() end,
-})
-
-GunTab:CreateToggle({
-   Name = "រើសកាំភ្លើងរហូតស្វ័យប្រវត្តិ (Loop Auto Grab Gun)",
-   CurrentValue = false,
-   Callback = function(v) AutoLoopGrabGun_Enabled = v end,
 })
 
 local FlingTab = Window:CreateTab("ប្រព័ន្ធ Fling", 4483362458)
