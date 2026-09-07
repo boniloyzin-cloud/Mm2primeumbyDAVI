@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 -- ==========================================
 local WhitelistedUsers = {
     ["DAVI_KDMH"] = true,     -- ឈ្មោះទី ១ (របស់អ្នក)
-    ["BuyerUsername2"] = true, -- ដូរទៅជា Username របស់អ្នកទិញទី ២
+    ["AHWIN320"] = true, -- ដូរទៅជា Username របស់អ្នកទិញទី ២
     ["BuyerUsername3"] = true,
     ["BuyerUsername4"] = true,
     ["BuyerUsername5"] = true,
