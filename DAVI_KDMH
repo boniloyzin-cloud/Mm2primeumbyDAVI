@@ -1,12 +1,12 @@
--- DAVI_MM2_version0.10 | Rayfield Khmer Edition with Whitelist Protection (50 Players)
+-- DAVI_MM2_version0.10 | Rayfield English Edition with Whitelist Protection (50 Players)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==========================================
--- 1. ប្រព័ន្ធ WHITELIST PROTECTION (50 PLAYERS)
+-- 1. WHITELIST PROTECTION SYSTEM (50 PLAYERS)
 -- ==========================================
 local WhitelistedUsers = {
-    ["DAVI_KDMH"] = true,     -- ឈ្មោះទី ១ (របស់អ្នក)
+    ["DAVI_KDMH"] = true,     -- Slot 1 (Owner)
     ["AHWIN320"] = true,
     ["BuyerUsername3"] = true,
     ["BuyerUsername4"] = true,
@@ -58,7 +58,7 @@ local WhitelistedUsers = {
     ["BuyerUsername50"] = true,
 }
 
--- ផ្ទៀងផ្ទាត់ឈ្មោះ Player
+-- Verify Username
 if not WhitelistedUsers[LocalPlayer.Name] then
     LocalPlayer:Kick("\n[ DAVI HUB SECURITY ]\n\nYou are not whitelisted!\nPlease Telegram: TAVI_KDMH to buy script.")
     return
@@ -70,9 +70,9 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "DAVI_MM2_version0.10 (ភាសាខ្មែរ)",
-   LoadingTitle = "កំពុងដំណើការ DAVI Engine...",
-   LoadingSubtitle = "MM2 Hub កម្ពុជា",
+   Name = "DAVI_MM2_version0.10 (English Edition)",
+   LoadingTitle = "Loading DAVI Engine...",
+   LoadingSubtitle = "MM2 Hub Global",
    ConfigurationSaving = { Enabled = false },
    Discord = { Enabled = false },
    KeySystem = false
@@ -335,36 +335,36 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- RAYFIELD UI TABS & CONTROLS
-local CombatTab = Window:CreateTab("ប្រព័ន្ធប្រយុទ្ធ", 4483362458)
+local CombatTab = Window:CreateTab("Combat System", 4483362458)
 
 CombatTab:CreateToggle({
-   Name = "បង្ហាញ Click Boxes លើអេក្រង់ (Show Click Boxes)",
+   Name = "Show On-Screen Click Boxes",
    CurrentValue = true,
    Callback = function(v) OnScreenUI_Visible = v end,
 })
 
 CombatTab:CreateButton({
-   Name = "បាញ់ Murderer ស្វ័យប្រវត្តិ (Auto Shoot Murder)",
+   Name = "Auto Shoot Murderer",
    Callback = function() shootMurderer() end,
 })
 
 CombatTab:CreateButton({
-   Name = "គប់កាំបិតសំដៅ Sheriff (Throw at Sheriff)",
+   Name = "Throw Knife at Sheriff",
    Callback = function() throwKnifeAt(getSheriff()) end,
 })
 
 CombatTab:CreateButton({
-   Name = "គប់កាំបិតសំដៅ Player ជិតបំផុត (Throw at Nearest Player)",
+   Name = "Throw Knife at Nearest Player",
    Callback = function() throwKnifeAt(getNearestPlayer()) end,
 })
 
 CombatTab:CreateButton({
-   Name = "Teleport ទៅបាញ់ Murderer ភ្លាមៗ (Sheriff TP & Shoot)",
+   Name = "Teleport & Shoot Murderer (Sheriff)",
    Callback = function() tpAndShootMurderer() end,
 })
 
 CombatTab:CreateButton({
-   Name = "សម្លាប់មនុស្សទាំងអស់ក្នុង Server (Kill Everyone - Murderer)",
+   Name = "Kill Everyone in Server (Murderer)",
    Callback = function()
       local char = LocalPlayer.Character
       local knife = char and (char:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife"))
@@ -386,22 +386,22 @@ CombatTab:CreateButton({
    end,
 })
 
-local VisualsTab = Window:CreateTab("រ៉ាដាមើលធ្លុះ & Aimbot", 4483362458)
+local VisualsTab = Window:CreateTab("Visuals & Aimbot", 4483362458)
 
 VisualsTab:CreateToggle({
-   Name = "បើក ESP មើលមនុស្ស (Red=Murd, Blue=Sheriff, Green=Normal)",
+   Name = "Player ESP (Red=Murd, Blue=Sheriff, Green=Innocent)",
    CurrentValue = false,
    Callback = function(v) ESP_Players_Enabled = v end,
 })
 
 VisualsTab:CreateToggle({
-   Name = "បើក ESP មើលកាំភ្លើងធ្លាក់ (Yellow Gun ESP)",
+   Name = "Dropped Gun ESP (Yellow)",
    CurrentValue = false,
    Callback = function(v) ESP_Gun_Enabled = v end,
 })
 
 VisualsTab:CreateToggle({
-   Name = "បើក Aimbot តម្រង់ក្បាល Murderer",
+   Name = "Aimbot Target: Murderer Head",
    CurrentValue = false,
    Callback = function(v) 
       Aimbot_Murderer_Enabled = v 
@@ -410,7 +410,7 @@ VisualsTab:CreateToggle({
 })
 
 VisualsTab:CreateToggle({
-   Name = "បើក Aimbot តម្រង់ក្បាល Sheriff",
+   Name = "Aimbot Target: Sheriff Head",
    CurrentValue = false,
    Callback = function(v) 
       Aimbot_Sheriff_Enabled = v 
@@ -419,13 +419,13 @@ VisualsTab:CreateToggle({
 })
 
 VisualsTab:CreateToggle({
-   Name = "បង្ហាញរង្វង់ Aimbot (Show FOV Circle)",
+   Name = "Show Aimbot FOV Circle",
    CurrentValue = false,
    Callback = function(v) FOV_Visible = v end,
 })
 
 VisualsTab:CreateSlider({
-   Name = "ទំហំរង្វង់ Aimbot FOV",
+   Name = "Aimbot FOV Radius",
    Range = {30, 400},
    Increment = 5,
    CurrentValue = 100,
@@ -435,14 +435,14 @@ VisualsTab:CreateSlider({
    end,
 })
 
-local GunTab = Window:CreateTab("ប្រព័ន្ធរើសកាំភ្លើង", 4483362458)
+local GunTab = Window:CreateTab("Gun System", 4483362458)
 
 GunTab:CreateButton({
-   Name = "Teleport ទៅរើសកាំភ្លើង 1 ដង (Teleport & Grab Gun)",
+   Name = "Teleport & Grab Dropped Gun (1x)",
    Callback = function() grabGun() end,
 })
 
-local FlingTab = Window:CreateTab("ប្រព័ន្ធ Fling", 4483362458)
+local FlingTab = Window:CreateTab("Fling System", 4483362458)
 
 local targetFlingPlayer = ""
 local pNames = {}
@@ -455,7 +455,7 @@ end
 refreshDropdown()
 
 local PlayerDropdown = FlingTab:CreateDropdown({
-   Name = "ជ្រើសរើសឈ្មោះ Player ដើម្បី Fling",
+   Name = "Select Player to Fling",
    Options = pNames,
    CurrentOption = pNames[1] or "",
    Callback = function(opt)
@@ -464,7 +464,7 @@ local PlayerDropdown = FlingTab:CreateDropdown({
 })
 
 FlingTab:CreateButton({
-   Name = "Fling Player ដែលបានជ្រើសរើសចេញក្រៅ Map",
+   Name = "Fling Selected Player Off Map",
    Callback = function()
       local target = Players:FindFirstChild(targetFlingPlayer)
       if target then executeFling(target) end
@@ -472,7 +472,7 @@ FlingTab:CreateButton({
 })
 
 FlingTab:CreateButton({
-   Name = "Teleport ទៅ Fling Murderer ចេញក្រៅ Map",
+   Name = "Teleport & Fling Murderer Off Map",
    Callback = function()
       local murd = getMurderer()
       if murd then executeFling(murd) end
@@ -480,17 +480,17 @@ FlingTab:CreateButton({
 })
 
 FlingTab:CreateButton({
-   Name = "Teleport ទៅ Fling Sheriff ចេញក្រៅ Map",
+   Name = "Teleport & Fling Sheriff Off Map",
    Callback = function()
       local sher = getSheriff()
       if sher then executeFling(sher) end
    end,
 })
 
-local TeleportTab = Window:CreateTab("បញ្ជូនទីតាំង (TP)", 4483362458)
+local TeleportTab = Window:CreateTab("Teleport System", 4483362458)
 
 TeleportTab:CreateButton({
-   Name = "Teleport ទៅ Lobby",
+   Name = "Teleport to Lobby",
    Callback = function()
       local lobby = Workspace:FindFirstChild("Lobby")
       local char = LocalPlayer.Character
@@ -501,7 +501,7 @@ TeleportTab:CreateButton({
 })
 
 TeleportTab:CreateButton({
-   Name = "Teleport ទៅ Map ប្រកួត",
+   Name = "Teleport to Active Map",
    Callback = function()
       local map = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("Map")
       local char = LocalPlayer.Character
@@ -513,7 +513,7 @@ TeleportTab:CreateButton({
 
 local targetTpPlayer = ""
 TeleportTab:CreateDropdown({
-   Name = "ជ្រើសរើស Player ដើម្បី Teleport ទៅជិត",
+   Name = "Select Player to Teleport To",
    Options = pNames,
    CurrentOption = pNames[1] or "",
    Callback = function(opt)
@@ -522,7 +522,7 @@ TeleportTab:CreateDropdown({
 })
 
 TeleportTab:CreateButton({
-   Name = "Teleport ទៅជិត Player នោះ",
+   Name = "Teleport Near Selected Player",
    Callback = function()
       local target = Players:FindFirstChild(targetTpPlayer)
       local char = LocalPlayer.Character
